@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!ATTLIST ddal:configs xmlns:ddal CDATA #FIXED "http://me.chenfei/">
+<!ELEMENT ddal:configs (dataSources,dataNodes,global)>
+
+<!ELEMENT dataSources (dataSource+)>
+<!ELEMENT dataSource (property*,url,userName,password)>
+<!ATTLIST dataSource name ID #REQUIRED>
+<!ELEMENT url (#PCDATA)>
+<!ELEMENT userName (#PCDATA)>
+<!ELEMENT password (#PCDATA)>
+
+<!ELEMENT dataNodes (dataNode+)>
+<!ELEMENT dataNode (property*,writeNodes,readNodes)>
+<!ATTLIST dataNode name ID #REQUIRED>
+<!ATTLIST dataNode default (true|false) #IMPLIED>
+<!ELEMENT writeNodes (#PCDATA)>
+<!ELEMENT readNodes (#PCDATA)>
+
+<!ELEMENT global (tableNumber,routeType,tableIndexStyle)>
+<!ELEMENT tableNumber (#PCDATA)>
+<!ELEMENT routeType (#PCDATA)>
+<!ELEMENT tableIndexStyle (#PCDATA)>
+
+

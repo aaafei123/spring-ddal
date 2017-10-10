@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ddal:configs SYSTEM "rules.dtd">
+<ddal:configs xmlns:ddal="http://me.chenfei/">
+
+	<tableRules>
+		<tableRule name="part-by-rang-long" class="io.isharing.springddal.route.rule.function.AutoPartitionByLong">
+			<property name="defaultNode">dn1</property><!-- 默认节点，可以定义为最新的库节点 -->
+			<property name="routeColumn">id</property>
+			<property name="mapFile">autopartition-long.txt</property><!-- 规则配置文件 -->
+		</tableRule>
+
+		<tableRule name="part-by-mod" class="io.isharing.springddal.route.rule.function.PartitionByMod">
+			<property name="defaultNode">dn1</property>
+			<property name="routeColumn">id</property>
+			<property name="count">3</property><!-- 拆分的总节点数 -->
+		</tableRule>
+
+		<tableRule name="part-by-long" class="io.isharing.springddal.route.rule.function.PartitionByLong">
+			<property name="defaultNode">dn1</property>
+			<property name="routeColumn">id</property>
+			<property name="partitionCount">8</property>
+			<property name="partitionLength">128</property>
+		</tableRule>
+
+		<tableRule name="part-by-month" class="io.isharing.springddal.route.rule.function.PartitionByMonth">
+			<property name="defaultNode">dn1</property>
+			<property name="routeColumn">createTime</property>
+			<property name="dateFormat">yyyy-MM-dd HH:mm:ss</property>
+			<property name="sBeginDate">2015-01-01 00:00:01</property>
+			<property name="sEndDate">2016-08-01 23:59:59</property>
+		</tableRule>
+
+		<tableRule name="part-by-year" class="io.isharing.springddal.route.rule.function.PartitionByYear">
+			<property name="defaultNode">dn1</property>
+			<property name="routeColumn">startDate</property>
+			<property name="dateFormat">yyyy-MM-dd</property>
+			<property name="sBeginDate">2015-01-01 00:00:01</property>
+			<!-- <property name="sEndDate">2016-08-01 23:59:59</property> -->
+		</tableRule>
+		
+		<tableRule name="savepart-by-year" class="io.isharing.springddal.route.rule.function.PartitionByYear">
+			<property name="defaultNode">dn1</property>
+			<property name="routeColumn">createTime</property>
+			<property name="dateFormat">yyyy-MM-dd</property>
+			<property name="sBeginDate">2015-01-01 00:00:01</property>
+			<!-- <property name="sEndDate">2016-08-01 23:59:59</property> -->
+		</tableRule>
+
+		<tableRule name="part-by-date" class="io.isharing.springddal.route.rule.function.PartitionByDate">
+			<property name="defaultNode">dn1</property>
+			<property name="routeColumn">createTime</property>
+			<property name="dateFormat">yyyy-MM-dd HH:mm:ss</property><!-- 日期格式 -->
+			<property name="sBeginDate">2015-01-01 00:00:01</property><!--开始日期 -->
+			<!-- 结束日期, 如果配置了 sEndDate 则代表数据达到了这个日期的分片后后循环从开始分片插入; 如果没配置则按每sPartionDay天继续切分。 -->
+			<property name="sEndDate">2016-01-01 23:59:59</property>
+			<property name="sPartionDay">10</property>  <!--每分片天数(步长值)，每sPartionDay天做一个分片 -->
+		</tableRule>
+	</tableRules>
+
+</ddal:configs>

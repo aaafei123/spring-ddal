@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!ATTLIST ddal:configs xmlns:ddal CDATA #FIXED "http://me.chenfei/">
+<!ELEMENT ddal:configs (tableRules)>
+
+<!ELEMENT tableRules (tableRule+)>
+<!ELEMENT tableRule (property*)>
+<!ATTLIST tableRule name CDATA #REQUIRED>
+<!ATTLIST tableRule class CDATA #REQUIRED>
+
+<!ELEMENT property (#PCDATA)>
+<!ATTLIST property name NMTOKEN #REQUIRED>

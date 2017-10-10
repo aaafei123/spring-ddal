@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ddal:configs SYSTEM "datanodes.dtd">
+<ddal:configs xmlns:ddal="http://me.chenfei/">
+
+	<!-- 
+		配置数据源 
+		命名规范：理论上说数据源命名无限制。但是最好统一风格以方便管理。
+		比如主节点以ds为前缀，后面从0开始编号：dn0-*。读节点按格式ds*_rep*命名（repl代表复制，读节点）
+	-->
+	<dataSources>
+		<!-- <dataSource name="ds0">
+			<url>jdbc:mysql://localhost:3306/test?useUnicode=true&amp;characterEncoding=UTF-8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		<dataSource name="ds0_repl1">
+			<url>jdbc:mysql://localhost:3306/test?useUnicode=true&amp;characterEncoding=UTF-8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		<dataSource name="ds0_repl2">
+			<url>jdbc:mysql://localhost:3306/test?useUnicode=true&amp;characterEncoding=UTF-8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+	
+		<dataSource name="ds1">
+			<url>jdbc:mysql://localhost:3306/test2?useUnicode=true&amp;characterEncoding=UTF-8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		<dataSource name="ds1_repl1">
+			<url>jdbc:mysql://localhost:3306/test2?useUnicode=true&amp;characterEncoding=UTF-8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		<dataSource name="ds1_repl2">
+			<url>jdbc:mysql://localhost:3306/test2?useUnicode=true&amp;characterEncoding=UTF-8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource> -->
+		
+		<dataSource name="ds0">
+			<url>jdbc:mysql://192.168.2.3:3306/fkh_dev?useUnicode=true&amp;characterEncoding=utf8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		<dataSource name="ds0_repl1">
+			<url>jdbc:mysql://192.168.2.3:3306/fkh_dev?useUnicode=true&amp;characterEncoding=utf8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		<dataSource name="ds0_repl2">
+			<url>jdbc:mysql://192.168.2.3:3306/fkh_dev?useUnicode=true&amp;characterEncoding=utf8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		
+		<dataSource name="ds1">
+			<url>jdbc:mysql://192.168.2.3:3306/fkh_dev?useUnicode=true&amp;characterEncoding=utf8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		<dataSource name="ds1_repl1">
+			<url>jdbc:mysql://192.168.2.3:3306/fkh_dev?useUnicode=true&amp;characterEncoding=utf8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		<dataSource name="ds1_repl2">
+			<url>jdbc:mysql://192.168.2.3:3306/fkh_dev?useUnicode=true&amp;characterEncoding=utf8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		
+		<dataSource name="ds2">
+			<url>jdbc:mysql://192.168.2.3:3306/fkh_dev?useUnicode=true&amp;characterEncoding=utf8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		<dataSource name="ds2_repl1">
+			<url>jdbc:mysql://192.168.2.3:3306/fkh_dev?useUnicode=true&amp;characterEncoding=utf8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+		<dataSource name="ds2_repl2">
+			<url>jdbc:mysql://192.168.2.3:3306/fkh_dev?useUnicode=true&amp;characterEncoding=utf8</url>
+			<userName>test</userName>
+			<password>111111</password>
+		</dataSource>
+	</dataSources>
+
+	<!-- 数据结点配置，default=true 代表该结点为默认主库（不参于分库的表，都存储在该节点中）。writeNodes和readNodes对应dataSource中的name属性。
+		命名规范：必须以dn为前缀，后面从0开始编号：dn0-*
+	-->
+	<dataNodes>
+		<dataNode name="global">
+			<writeNodes>ds0</writeNodes>
+			<readNodes>ds0_repl1, ds0_repl2</readNodes>
+		</dataNode>
+		<dataNode name="dn0" default="true">
+			<writeNodes>ds0</writeNodes>
+			<readNodes>ds0_repl1, ds0_repl2</readNodes>
+		</dataNode>
+		<dataNode name="dn1">
+			<writeNodes>ds1</writeNodes>
+			<readNodes>ds1_repl1, ds1_repl2</readNodes>
+		</dataNode>
+		<dataNode name="dn2">
+			<writeNodes>ds2</writeNodes>
+			<readNodes>ds2_repl1, ds2_repl2</readNodes>
+		</dataNode>
+	</dataNodes>
+
+	<!-- 参数说明 
+		tableNumber： 切分的数据库表数量 
+		routeType： 路由类型类型：0：仅分库；1：仅分表；2：分库分表 
+		tableIndexStyle：分表的序号/索引样式，默认为_0000
+	-->
+	<global>
+		<tableNumber>5</tableNumber>
+		<routeType>2</routeType>
+		<tableIndexStyle>00</tableIndexStyle>
+	</global>
+
+</ddal:configs>
