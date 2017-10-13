@@ -89,8 +89,9 @@
 		</dataSource>
 	</dataSources>
 
-	<!-- 数据结点配置，default=true 代表该结点为默认主库（不参于分库的表，都存储在该节点中）。writeNodes和readNodes对应dataSource中的name属性。
-		命名规范：必须以dn为前缀，后面从0开始编号：dn0-*
+	<!-- 数据结点配置，default=true 代表该结点为默认主库（定义了Router注解，但是又未传分片键或分片键的值为空的，都默认存储在该节点中）。
+		writeNodes和readNodes对应dataSource中的name属性。
+		命名规范：除global全局库外，其他分库分表的数据源节点必须以dn为前缀，后面从0开始编号：dn0-*
 	-->
 	<dataNodes>
 		<dataNode name="global">
@@ -117,8 +118,8 @@
 		tableIndexStyle：分表的序号/索引样式，默认为_0000
 	-->
 	<global>
-		<tableNumber>5</tableNumber>
 		<routeType>2</routeType>
+		<tableNumber>5</tableNumber>
 		<tableIndexStyle>00</tableIndexStyle>
 	</global>
 

@@ -17,9 +17,9 @@
 <!ELEMENT writeNodes (#PCDATA)>
 <!ELEMENT readNodes (#PCDATA)>
 
-<!ELEMENT global (tableNumber,routeType,tableIndexStyle)>
-<!ELEMENT tableNumber (#PCDATA)>
+<!ELEMENT global (routeType,tableNumber,tableIndexStyle)>
 <!ELEMENT routeType (#PCDATA)>
+<!ELEMENT tableNumber (#PCDATA)>
 <!ELEMENT tableIndexStyle (#PCDATA)>
 
 

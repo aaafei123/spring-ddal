@@ -1,3 +1,30 @@
+/*
+* Copyright (C) 2017 ChenFei, All Rights Reserved
+*
+* This program is free software; you can redistribute it and/or modify it 
+* under the terms of the GNU General Public License as published by the Free 
+* Software Foundation; either version 3 of the License, or (at your option) 
+* any later version.
+*
+* This program is distributed in the hope that it will be useful, but 
+* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+* or FITNESS FOR A PARTICULAR PURPOSE. 
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with
+* this program; if not, see <http://www.gnu.org/licenses>.
+*
+* This code is available under licenses for commercial use. Please contact
+* ChenFei for more information.
+*
+* http://www.gplgpu.com
+* http://www.chenfei.me
+*
+* Title       :  Spring DDAL
+* Author      :  Chen Fei
+* Email       :  cn.fei.chen@qq.com
+*
+*/
 package io.isharing.springddal.route;
 
 import java.lang.reflect.Method;
@@ -5,16 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javassist.ClassClassPath;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
-import javassist.Modifier;
-import javassist.NotFoundException;
-import javassist.bytecode.CodeAttribute;
-import javassist.bytecode.LocalVariableAttribute;
-import javassist.bytecode.MethodInfo;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
@@ -32,9 +49,21 @@ import io.isharing.springddal.route.exception.ParamsErrorException;
 import io.isharing.springddal.route.rule.conf.TableRule;
 import io.isharing.springddal.route.rule.conf.XMLLoader;
 import io.isharing.springddal.route.rule.utils.ParameterMapping;
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+import javassist.Modifier;
+import javassist.NotFoundException;
+import javassist.bytecode.CodeAttribute;
+import javassist.bytecode.LocalVariableAttribute;
+import javassist.bytecode.MethodInfo;
 
 /**
  * 切面切点 在Router注解的方法执行前执行 切点织入
+ * 
+ * @author <a href=mailto:cn.fei.chen@qq.com>Chen Fei</a>
+ * 
  */
 @Component
 public class RouteInterceptor {
@@ -62,10 +91,15 @@ public class RouteInterceptor {
         Router router = getDeclaringClassAnnotation(jp);
         if(null == router){
         	log.debug(">>> No Router annotation, use default node for query.");
-        	routeStrategy.routeToGlobalNode();
+        	routeStrategy.routeToGlobalNode(false, true);
         }else{
         	boolean isRoute = router.isRoute();
-        	boolean readOnly = router.readOnly();
+        	String type = router.type();
+            String dataNode = router.dataNode();
+            String ruleName = router.ruleName();
+            boolean readOnly = router.readOnly();
+            boolean forceReadOnMaster = router.forceReadOnMaster();
+            
             Method method = ((MethodSignature) jp.getSignature()).getMethod();
             Object target = jp.getTarget();
             String cacheKey = target.getClass().getName() + "." + method.getName();
@@ -76,9 +110,10 @@ public class RouteInterceptor {
                 isReadCacheValue = isChoiceReadDB(realMethod, readOnly);
                 methodIsReadCache.put(cacheKey, isReadCacheValue);
             }
-            String ruleName = router.ruleName();
-        	if(StringUtils.isBlank(ruleName)){
-        		log.error(">>> ruleName is NULL, throw ParamsErrorException.");
+            
+        	if(StringUtils.isBlank(dataNode) 
+        			|| StringUtils.isBlank(ruleName)){
+        		log.error(">>> DataNode and RuleName is NULL, throw ParamsErrorException.");
         		throw new ParamsErrorException();
         	}
             if(isRoute) {//路由计算
@@ -89,10 +124,17 @@ public class RouteInterceptor {
                  * 		如果是读操作，则进入规则库计算读库的index
                  */
             	log.debug(">>> calculating route...");
-                execute(jp, router, ruleName, isReadCacheValue);
+            	if(StringUtils.isNotBlank(type) 
+            			&& type.equalsIgnoreCase("global")){
+            		//路由到全局库 根据注解参数做读写分离
+            		log.debug(">> route to global datanode...");
+            		routeStrategy.routeToGlobalNode(isReadCacheValue, forceReadOnMaster);
+            	}else{
+            		execute(jp, router, ruleName, isReadCacheValue);
+            	}
             }else{
             	log.debug(">>> isRoute is not config on Router, using default node config on Rules.xml.");
-            	routeStrategy.routeToDefaultNode(ruleName);
+            	routeStrategy.routeToDefaultNode(ruleName, readOnly, forceReadOnMaster);//根据注解参数做读写分离，如参数不足，则直接读写主库
             }
         }
 
@@ -120,11 +162,23 @@ public class RouteInterceptor {
         Object[] args = jp.getArgs();
         Map<String, Object> nameAndArgs = getFieldsNameAndArgs(jp, args);
         log.debug(">>> "+nameAndArgs.toString());
-
-        if (args != null && args.length > 0) {
+        
+        String routeFieldValue = processRouteFieldValue(args, nameAndArgs, routeField);
+        if(StringUtils.isBlank(routeFieldValue)){
+        	log.error(">>> routeFieldValue is NULL, query from default node(define in rules.xml).");
+        	boolean forceReadOnMaster = router.forceReadOnMaster();
+        	routeStrategy.routeToDefaultNode(ruleName, isReadCacheValue, forceReadOnMaster);
+        	return;
+    	}
+        //进入规则库进行路由计算
+        routeStrategy.route(router, routeField, routeFieldValue, isReadCacheValue);
+    }
+    
+    private String processRouteFieldValue(Object[] args, Map<String, Object> nameAndArgs, String routeField) throws Throwable {
+    	String routeFieldValue = "";
+    	if (args != null && args.length > 0) {
             for (int i = 0; i < args.length; i++) {
                 long t2 = System.currentTimeMillis();
-                String routeFieldValue = "";
                 
                 /**
                  * MyBatis的传入参数parameterType类型分两种
@@ -147,14 +201,9 @@ public class RouteInterceptor {
                     		 */
                     		routeFieldValue = objValue.toString();
                     		log.error(">>> parameters is primitive type, routeField="+routeField+", routeFieldValue="+routeFieldValue);
+                    		break;
                     	}
                     }
-                	//无拆分字段，则直接路由至最新分库上查询
-                	if(StringUtils.isBlank(routeFieldValue)){
-                    	log.error(">>> routeFieldValue is NULL[isPrimitiveType], query from default nodes(define in rules.xml).");
-                    	routeStrategy.routeToDefaultNode(ruleName);
-                    	return;
-                	}
 //                	routeFieldValue = args[i].toString();
                 }else{//复杂数据类型：类和Map，以及collection（List、Array...）
                 	if(args[i] instanceof List 
@@ -164,27 +213,17 @@ public class RouteInterceptor {
                 		 * 带分片键的：比如 id in (...) 之类的
                 		 * 不带分片键的：比如 name in (...) 之类的
                 		 * 这两种情况，应该是 TODO 按切分字段到相应节点查询或全库扫描，
-                		 * 但是目前全库扫描和跨库查询过于复杂，暂时不支持，对于这种情况，会直接路由至最新分库上查询。
+                		 * 但是目前全库扫描和跨库查询过于复杂，暂时不支持，对于这种情况，会直接路由至默认库上查询。
                 		 */
-                		log.error(">>> Parameters is collection object, query from latest nodes(define in rules.xml).");
-                		routeStrategy.routeToDefaultNode(ruleName);
-                    	return;
                 	}else{
                 		routeFieldValue = BeanUtils.getProperty(args[i], routeField);
+                		break;
                 	}
                 }
                 log.debug(">>> routeFieldValue="+routeFieldValue + ", cost time=" + (System.currentTimeMillis() - t2));
-//            	String ruleName = router.ruleName();
-                if(StringUtils.isBlank(routeFieldValue)){
-                	log.error(">>> routeFieldValue is NULL, query from default nodes(define in rules.xml).");
-                	routeStrategy.routeToDefaultNode(ruleName);
-                	return;
-            	}
-                boolean forceReadOnMaster = router.forceReadOnMaster();
-                //进入规则库进行路由计算
-                routeStrategy.route(ruleName, routeField, routeFieldValue, isReadCacheValue, forceReadOnMaster);
             }
-        }
+    	}
+    	return routeFieldValue;
     }
     
     /**
@@ -194,23 +233,23 @@ public class RouteInterceptor {
      * 1）通过事务注解 <code>@Transactional</code>
      * 2）通过Router注解配置 <code>@Router</code>
      * 
-     * 
-     *
      * @param method 		执行方法
      * @param readOnly		注解中配置的是否读操作
      * @return 			当前方法是否只读
      */
     private boolean isChoiceReadDB(Method method, boolean readOnly) {
         Transactional transactionalAnno = AnnotationUtils.findAnnotation(method, Transactional.class);
-        if (transactionalAnno == null || readOnly) {
-            return true;
-        }
         // 如果之前选择了写库，则现在还选择写库
         if (DynamicDataSourceHolder.isChoiceWrite()) {
             return false;
         }
-        if(!readOnly){
+        //如果有事务注解，并且事务注解表明readOnly为false，那么判断为写操作。
+        //如果Router注解中也配置了readOnly=true，则以事务注解为准。
+        if(null != transactionalAnno && !transactionalAnno.readOnly()){
         	return false;
+        }
+        if (transactionalAnno == null || readOnly) {
+            return true;
         }
         if (transactionalAnno.readOnly()) {
             return true;

@@ -1,3 +1,30 @@
+/*
+* Copyright (C) 2017 ChenFei, All Rights Reserved
+*
+* This program is free software; you can redistribute it and/or modify it 
+* under the terms of the GNU General Public License as published by the Free 
+* Software Foundation; either version 3 of the License, or (at your option) 
+* any later version.
+*
+* This program is distributed in the hope that it will be useful, but 
+* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+* or FITNESS FOR A PARTICULAR PURPOSE. 
+* See the GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License along with
+* this program; if not, see <http://www.gnu.org/licenses>.
+*
+* This code is available under licenses for commercial use. Please contact
+* ChenFei for more information.
+*
+* http://www.gplgpu.com
+* http://www.chenfei.me
+*
+* Title       :  Spring DDAL
+* Author      :  Chen Fei
+* Email       :  cn.fei.chen@qq.com
+*
+*/
 package io.isharing.springddal.route.annotation;
 
 import java.lang.annotation.ElementType;
@@ -5,6 +32,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * 原则上来说，注解中所有属性均可同时配置使用。<br>
+ * 唯一要注意的一点就是dataNode和ruleName同时配置之后，ruleName的规则仅作为库内分表使用。<br>
+ * 
+ * @author <a href=mailto:cn.fei.chen@qq.com>Chen Fei</a>
+ *
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE,ElementType.METHOD})
 public @interface Router {
@@ -36,7 +70,19 @@ public @interface Router {
     String ruleName() default RouterConst.ROUTER_TBLRULENAME_DEFAULT;
     
     /**
+     * 数据库节点，对应datanodes.xml文件中的dataNodes节点。
+     * 多个节点以英文逗号分隔，如果是连续节点可以定义为：dn$0-10，表示定义了dn0-dn10共10个节点。
+     */
+    String dataNode() default "";
+    
+    /**
+     * 拆分类型，普通规则拆分默认为空。全局库/表须定义为：global
+     */
+    String type() default "";
+    
+    /**
      * 拆分表的后缀样式/风格
      */
     String tableStyle() default RouterConst.ROUTER_TABLE_SUFFIX_DEFAULT;
+    
 }
