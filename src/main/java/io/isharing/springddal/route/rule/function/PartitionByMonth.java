@@ -198,7 +198,7 @@ public class PartitionByMonth extends AbstractPartitionAlgorithm implements Rule
 //		pm.setsEndDate(ed);
 		pm.setDateFormat("yyyy-MM-dd HH:mm:ss");
 		pm.init();
-		int result = pm.calculate("2018-12-01 13:33:12");
+		int result = pm.calculate("2017-12-01 13:33:12");
 		Integer[] range = pm.calculateRange(bd, ed);
 		System.out.println(">>> Total Partition: "+pm.getPartitionNum());
 		System.out.println(">>> Current Partition: "+result);

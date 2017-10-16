@@ -129,12 +129,11 @@ public class MysqlRouteStrategy implements RouteStrategy {
 		
 		List<String> dnList = getDataNodeList(dataNode);
 		String node;
-		dbIndex = dbIndex -1;
-		if (dbIndex >=0 && dbIndex < dnList.size()) {
+		if (dbIndex >= 0 && dbIndex < dnList.size()) {
 			node = dnList.get(dbIndex);
 		} else {
 			node = null;
-			String msg = ">>> ERROR! Can't find a valid data node for specified node index :" + dbIndex;
+			String msg = ">>> FATAL ERROR! Can't find a valid data node for specified node index :" + dbIndex;
 			log.error(msg);
 			throw new SQLNonTransientException(msg);
 		}
