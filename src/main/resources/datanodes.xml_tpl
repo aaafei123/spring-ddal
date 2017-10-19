@@ -89,16 +89,19 @@
 		</dataSource>
 	</dataSources>
 
-	<!-- 数据结点配置，default=true 代表该结点为默认主库（定义了Router注解，但是又未传分片键或分片键的值为空的，都默认存储在该节点中）。
-		writeNodes和readNodes对应dataSource中的name属性。
-		命名规范：除global全局库外，其他分库分表的数据源节点必须以dn为前缀，后面从0开始编号：dn0-*
+	<!--
+		dataNodes中有多个dataNode组成，意义为：一个dataNode代表一个节点，
+		dataNode有两种节点，一种是全局配置，另一种是拆分的或需读写分离的。
+		只能有一个全局配置的dataNode，name命名为：global（不能修改，也可以叫默认节点）。全局库可以针对全局表使用，但是还有一个重要的作用，
+		就是针对不分库分表的默认节点，也就是说，如果你只对部分表进行拆分，那么其他表都会被路由到该节点上。
+		命名规范约定：除global全局库外需将name定义为global之外，其他分库分表的数据源节点dataNode的name可随意定义，建议以dn为前缀，后面从0开始编号：dn0-*。
 	-->
 	<dataNodes>
 		<dataNode name="global">
 			<writeNodes>ds0</writeNodes>
 			<readNodes>ds0_repl1, ds0_repl2</readNodes>
 		</dataNode>
-		<dataNode name="dn0" default="true">
+		<dataNode name="dn0">
 			<writeNodes>ds0</writeNodes>
 			<readNodes>ds0_repl1, ds0_repl2</readNodes>
 		</dataNode>

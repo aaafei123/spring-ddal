@@ -13,7 +13,6 @@
 <!ELEMENT dataNodes (dataNode+)>
 <!ELEMENT dataNode (property*,writeNodes,readNodes)>
 <!ATTLIST dataNode name ID #REQUIRED>
-<!ATTLIST dataNode default (true|false) #IMPLIED>
 <!ELEMENT writeNodes (#PCDATA)>
 <!ELEMENT readNodes (#PCDATA)>
 

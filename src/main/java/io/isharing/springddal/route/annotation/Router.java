@@ -33,8 +33,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 原则上来说，注解中所有属性均可同时配置使用。<br>
- * 唯一要注意的一点就是dataNode和ruleName同时配置之后，ruleName的规则仅作为库内分表使用。<br>
+ * 分库分表的路由配置，可定义在类名上也可定义在类方法名上，如果同时配置了，那么方法名上的配置优先级大于类名上的。<br>
  * 
  * @author <a href=mailto:cn.fei.chen@qq.com>Chen Fei</a>
  *

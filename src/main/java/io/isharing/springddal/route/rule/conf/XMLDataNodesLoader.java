@@ -160,40 +160,42 @@ public class XMLDataNodesLoader {
 	
 	private void initDataNodes(Map<String, DataSource> dataSourceMap, List<DataNode> dataNodeCfgs) {
 		for (DataNode cfg : dataNodeCfgs) {
-//			List<DataSource> writeNodesDsList = new ArrayList<DataSource>();
-//			List<DataSource> readNodesDsList = new ArrayList<DataSource>();
 			List<String> writeNodesDsNameList = new ArrayList<String>();
 			List<String> readNodesDsNameList = new ArrayList<String>();
+			String nodeName = cfg.getNodeName();
 			
 			List<String> writeNodesStr = split(cfg.getWriteNodes(), ",");
-			
 			for (String str : writeNodesStr) {
 				if (dataSourceMap.get(str) != null) {
-//					writeNodesDsList.add(dataSourceMap.get(str));
 					writeNodesDsNameList.add(str);
 					dataSources.put(str, dataSourceMap.get(str));
-					if(cfg.isDefaultWriteNode()){
+//					if(cfg.isDefaultWriteNode()){
+					if(isGlobalNode(nodeName)){
 						defaultWriteDataNode = dataSourceMap.get(str);
 						defaultWriteDataNodeName = str;
 					}
 				}
 			}
+		
 			List<String> readNodesStr = split(cfg.getReadNodes(), ",");
 			for (String str : readNodesStr) {
 				if (dataSourceMap.get(str) != null) {
-//					readNodesDsList.add(dataSourceMap.get(str));
 					readNodesDsNameList.add(str);
 					dataSources.put(str, dataSourceMap.get(str));
 				}
 			}
 			DataSourceNode dsNode = new DataSourceNode(writeNodesDsNameList, readNodesDsNameList);
-			if(cfg.isDefaultWriteNode()){
+//			if(cfg.isDefaultWriteNode()){
+			if(isGlobalNode(nodeName)){
 				dataNodesMap.put("default", dsNode);
 			}
 			dataNodesMap.put(cfg.getNodeName(), dsNode);
-//			dataNodes.add(dsNode);
 		}
 		dataSourceMap = null;
+	}
+	
+	private boolean isGlobalNode(String nodeName){
+		return (nodeName.equalsIgnoreCase("global") || nodeName.equalsIgnoreCase("default"));
 	}
 	
 	/**
@@ -253,12 +255,12 @@ public class XMLDataNodesLoader {
 			String nodeName = dnList.item(i).getAttributes().getNamedItem("name").getNodeValue();
 			dataNodeCfg.setNodeName(nodeName);
 			
-			try{
+			/*try{
 				String isDefault = dnList.item(i).getAttributes().getNamedItem("default").getNodeValue();
 				dataNodeCfg.setDefaultWriteNode(Boolean.parseBoolean(isDefault));
 			}catch(NullPointerException ne){
 				dataNodeCfg.setDefaultWriteNode(false);
-			}
+			}*/
 			
 			NodeList dn = dnList.item(i).getChildNodes();
 			dataNodesList.add(dataNodeCfg);

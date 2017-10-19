@@ -115,7 +115,7 @@ public class MysqlRouteStrategy implements RouteStrategy {
         	}
         }
         int routeFieldInt = RouteUtils.getResourceCode(routeFieldValue);
-        tbIndex = routeFieldInt % tableNum;
+        tbIndex = routeFieldInt % tableNum;//计算tables的索引
         
         if (routeType == ROUTER_TYPE_DB) {
         	dbIndex = algorithm.calculate(routeFieldValue);
