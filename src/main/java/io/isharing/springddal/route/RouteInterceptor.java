@@ -279,7 +279,7 @@ public class RouteInterceptor {
 //            classPool.importPackage("io.isharing.springddal");
             CtClass clazz = classPool.get(method.getDeclaringClass().getName());
             ClassFile classFile = clazz.getClassFile();
-            System.out.println("增强前Router:" + clazz.getAnnotation(Router.class));
+            log.debug(">>> 合并前Router:" + clazz.getAnnotation(Router.class));
             
             ConstPool constPool = classFile.getConstPool();
             Annotation tableAnnotation = new Annotation(Router.class.getName(), constPool);
@@ -304,7 +304,7 @@ public class RouteInterceptor {
             classFile.addAttribute(attribute);
             classFile.setVersionToJava5();
               
-            System.out.println("增强后Router:" + clazz.getAnnotation(Router.class));
+            log.debug(">>> 合并后Router:" + clazz.getAnnotation(Router.class));
             
             annotation = (Router)clazz.getAnnotation(Router.class);
         } catch (Exception e) {
