@@ -314,16 +314,18 @@ public class RouteInterceptor {
 			
             // 获取运行时注解属性
             AnnotationsAttribute attribute = (AnnotationsAttribute)classFile.getAttribute(AnnotationsAttribute.visibleTag);
-            if(null != attribute){
-            	attribute.addAnnotation(tableAnnotation);
-                classFile.addAttribute(attribute);
-                classFile.setVersionToJava5();
+            if(null == attribute){
+            	attribute = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
 			}
+            attribute.addAnnotation(tableAnnotation);
+			classFile.addAttribute(attribute);
+            classFile.setVersionToJava5();
             
             log.debug(">>> After merge value, Router:" + clazz.getAnnotation(Router.class));
             
             annotation = (Router)clazz.getAnnotation(Router.class);
         } catch (Exception e) {
+        	log.error(">>> occur exception, e:"+e.getLocalizedMessage());
             e.printStackTrace();
         }
 		log.error(">>> annotation is "+annotation);
@@ -392,32 +394,27 @@ public class RouteInterceptor {
         return jp.getTarget().getClass();
     }
     
-    private Map<String,Object> getFieldsNameAndArgs(ProceedingJoinPoint jp, Object[] args) throws NotFoundException, ClassNotFoundException{
+    private Map<String,Object> getFieldsNameAndArgs(ProceedingJoinPoint jp, Object[] args) throws NotFoundException, ClassNotFoundException, NoSuchMethodException{
     	String classType = jp.getTarget().getClass().getName();    
         Class<?> clazz = Class.forName(classType);    
         String clazzName = clazz.getName();
         String methodName = jp.getSignature().getName();
-        Map<String, Object> nameAndArgs = getFieldsNameAndArgs(this.getClass(), clazzName, methodName, args);
-        return nameAndArgs;
-    }
-    
-    /**
-     * 获取参数名和参数值，以Map形式返回
-     * 参数名为调用的函数的参数名。
-     * @param cls
-     * @param clazzName
-     * @param methodName
-     * @param args
-     * @return
-     * @throws NotFoundException
-     */
-    private Map<String,Object> getFieldsNameAndArgs(Class cls, String clazzName, String methodName, Object[] args) throws NotFoundException {
-        Map<String,Object > map = new HashMap<String,Object>();
-        ClassPool pool = ClassPool.getDefault();
-        //ClassClassPath classPath = new ClassClassPath(this.getClass());
-        ClassClassPath classPath = new ClassClassPath(cls);
-        pool.insertClassPath(classPath);
-        CtClass cc = pool.get(clazzName);
+//        Map<String, Object> nameAndArgs = getFieldsNameAndArgs(this.getClass(), clazzName, methodName, args);
+        
+        Map<String,Object > nameAndArgs = new HashMap<String,Object>();
+        
+        ClassPool classPool = ClassPool.getDefault();
+        classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
+//        classPool.importPackage("io.isharing.springddal");
+        CtClass cc = null;
+        try{
+        	cc = classPool.get(clazzName);
+        }catch(NotFoundException ne){
+            Class<?> interfaceDao = getProxyDaoInterfaceClazz(jp);
+            cc = classPool.get(interfaceDao.getName());
+            log.error(">>> proxy dao interface class. clazz name: "+interfaceDao.getName());
+        }
+        
         CtMethod cm;
 		try {
 			cm = cc.getDeclaredMethod(methodName);
@@ -434,8 +431,54 @@ public class RouteInterceptor {
        // String[] paramNames = new String[cm.getParameterTypes().length];
         int pos = Modifier.isStatic(cm.getModifiers()) ? 0 : 1;
         for (int i = 0; i < cm.getParameterTypes().length; i++){
-            map.put( attr.variableName(i + pos),args[i]);//paramNames即参数名
+        	nameAndArgs.put( attr.variableName(i + pos), args[i]);//paramNames即参数名
         }
+        return nameAndArgs;
+    }
+    
+    /**
+     * 获取参数名和参数值，以Map形式返回
+     * 参数名为调用的函数的参数名。
+     * @param cls
+     * @param clazzName
+     * @param methodName
+     * @param args
+     * @return
+     * @throws NotFoundException
+     */
+    private Map<String,Object> getFieldsNameAndArgs(Class cls, String clazzName, String methodName, Object[] args) throws NotFoundException {
+        Map<String,Object > map = new HashMap<String,Object>();
+        
+        /*ClassPool classPool = ClassPool.getDefault();
+        classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
+//        classPool.importPackage("io.isharing.springddal");
+        CtClass clazz = null;
+        try{
+        	clazz = classPool.get(clazzName);
+        }catch(NotFoundException ne){
+            Class<?> interfaceDao = getProxyDaoInterfaceClazz(jp);
+            clazz = classPool.get(interfaceDao.getName());
+            log.error(">>> proxy dao interface class. clazz name: "+interfaceDao.getName());
+        }
+        
+        CtMethod cm;
+		try {
+			cm = clazz.getDeclaredMethod(methodName);
+		} catch (NotFoundException e) {
+			clazz = clazz.getSuperclass();
+	        cm = clazz.getDeclaredMethod(methodName);
+		}
+        MethodInfo methodInfo = cm.getMethodInfo();
+        CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
+        LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);
+        if (attr == null) {
+            throw new NotFoundException(">>> LocalVariableAttribute is NULL!");
+        }
+       // String[] paramNames = new String[cm.getParameterTypes().length];
+        int pos = Modifier.isStatic(cm.getModifiers()) ? 0 : 1;
+        for (int i = 0; i < cm.getParameterTypes().length; i++){
+            map.put( attr.variableName(i + pos),args[i]);//paramNames即参数名
+        }*/
         return map;
     }
 
