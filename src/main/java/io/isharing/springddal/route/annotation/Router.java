@@ -66,7 +66,7 @@ public @interface Router {
     /**
      * 拆分规则名
      */
-    String ruleName() default RouterConst.ROUTER_TBLRULENAME_DEFAULT;
+    String ruleName() default "";
     
     /**
      * 数据库节点，对应datanodes.xml文件中的dataNodes节点。

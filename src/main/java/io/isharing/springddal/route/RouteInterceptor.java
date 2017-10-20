@@ -55,9 +55,15 @@ import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
+import javassist.bytecode.AnnotationsAttribute;
+import javassist.bytecode.ClassFile;
 import javassist.bytecode.CodeAttribute;
+import javassist.bytecode.ConstPool;
 import javassist.bytecode.LocalVariableAttribute;
 import javassist.bytecode.MethodInfo;
+import javassist.bytecode.annotation.Annotation;
+import javassist.bytecode.annotation.BooleanMemberValue;
+import javassist.bytecode.annotation.StringMemberValue;
 
 /**
  * 切面切点 在Router注解的方法执行前执行 切点织入
@@ -260,26 +266,98 @@ public class RouteInterceptor {
     /**
      * 获取自定义注解Router对象
      * 
-     * @param jp
+     * @param jp	ProceedingJoinPoint
      * @return
      * @throws NoSuchMethodException
      */
 	private Router getDeclaringClassAnnotation(ProceedingJoinPoint jp) throws NoSuchMethodException {
 		Router annotation = null;
-		Method method = getMethod(jp);
-		boolean flag = method.isAnnotationPresent(Router.class);
-		log.error(">>> isAnnotationPresent flag is " + flag);
-		if (flag) {
-			annotation = method.getAnnotation(Router.class);
-		} else {
-			// 如果方法上没有注解，则搜索类上是否有注解
-			annotation = AnnotationUtils.findAnnotation(method.getDeclaringClass(), Router.class);
-			if (annotation == null) {
-				annotation = AnnotationUtils.findAnnotation(jp.getTarget().getClass(), Router.class);
+		try {
+			Method method = getMethod(jp);
+            ClassPool classPool = ClassPool.getDefault();
+            classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
+//            classPool.importPackage("io.isharing.springddal");
+            CtClass clazz = classPool.get(method.getDeclaringClass().getName());
+            ClassFile classFile = clazz.getClassFile();
+            System.out.println("增强前Router:" + clazz.getAnnotation(Router.class));
+            
+            ConstPool constPool = classFile.getConstPool();
+            Annotation tableAnnotation = new Annotation(Router.class.getName(), constPool);
+
+            Router router = AnnotationUtils.findAnnotation(method.getDeclaringClass(), Router.class);
+    		if(router == null) {
+    			router = AnnotationUtils.findAnnotation(jp.getTarget().getClass(), Router.class);
+    		}
+    		if(router != null){
+    			updateRouter(null, router, tableAnnotation, constPool);
+    		}
+    		boolean flag = method.isAnnotationPresent(Router.class);
+			log.error(">>> isAnnotationPresent flag is " + flag);
+			if(flag) {
+				Router _router = method.getAnnotation(Router.class);
+				updateRouter(router, _router, tableAnnotation, constPool);
 			}
-		}
+            
+            // 获取运行时注解属性
+            AnnotationsAttribute attribute = (AnnotationsAttribute)classFile.getAttribute(AnnotationsAttribute.visibleTag);
+            attribute.addAnnotation(tableAnnotation);
+            classFile.addAttribute(attribute);
+            classFile.setVersionToJava5();
+              
+            System.out.println("增强后Router:" + clazz.getAnnotation(Router.class));
+            
+            annotation = (Router)clazz.getAnnotation(Router.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 		log.error(">>> annotation is "+annotation);
 		return annotation;
+	}
+	
+	private void updateRouter(Router oldRouter, Router newRouter, Annotation tableAnnotation, ConstPool constPool){
+		boolean _isRoute = true;
+		String _type = "";
+		String _dataNode = "";
+		String _ruleName = "";
+		boolean _forceReadOnMaster = false;
+		boolean _readOnly = true;
+		if(null != oldRouter){
+			_isRoute = oldRouter.isRoute();
+        	_type = oldRouter.type();
+            _dataNode = oldRouter.dataNode();
+            _ruleName = oldRouter.ruleName();
+            _readOnly = oldRouter.readOnly();
+            _forceReadOnMaster = oldRouter.forceReadOnMaster();
+        }
+		
+		if(newRouter != null){
+			boolean isRoute = newRouter.isRoute();
+        	String type = newRouter.type();
+            String dataNode = newRouter.dataNode();
+            String ruleName = newRouter.ruleName();
+            boolean readOnly = newRouter.readOnly();
+            boolean forceReadOnMaster = newRouter.forceReadOnMaster();
+            
+            
+            if(_isRoute != isRoute){
+            	tableAnnotation.addMemberValue("isRoute", new BooleanMemberValue(isRoute, constPool));	
+            }
+            if(StringUtils.isNotBlank(dataNode) && !dataNode.equalsIgnoreCase(_dataNode)){
+            	tableAnnotation.addMemberValue("dataNode", new StringMemberValue(dataNode, constPool));
+            }
+            if(StringUtils.isNotBlank(ruleName) && !ruleName.equalsIgnoreCase(_ruleName)){
+            	tableAnnotation.addMemberValue("ruleName", new StringMemberValue(ruleName, constPool));
+            }
+            if(StringUtils.isNotBlank(type) && !type.equalsIgnoreCase(_type)){
+            	tableAnnotation.addMemberValue("type", new StringMemberValue(type, constPool));
+            }
+            if(_readOnly != readOnly){
+            	tableAnnotation.addMemberValue("readOnly", new BooleanMemberValue(readOnly, constPool));
+            }
+            if(_forceReadOnMaster != forceReadOnMaster){
+            	tableAnnotation.addMemberValue("forceReadOnMaster", new BooleanMemberValue(forceReadOnMaster, constPool));
+            }
+		}
 	}
 
     private Method getMethod(ProceedingJoinPoint jp) throws NoSuchMethodException {
