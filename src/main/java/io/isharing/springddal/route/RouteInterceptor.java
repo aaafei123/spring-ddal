@@ -56,6 +56,7 @@ import javassist.CtMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.AnnotationsAttribute;
+import javassist.bytecode.AttributeInfo;
 import javassist.bytecode.ClassFile;
 import javassist.bytecode.CodeAttribute;
 import javassist.bytecode.ConstPool;
@@ -119,8 +120,9 @@ public class RouteInterceptor {
             
         	if(StringUtils.isBlank(dataNode) 
         			|| StringUtils.isBlank(ruleName)){
-        		log.error(">>> DataNode and RuleName is NULL, throw ParamsErrorException.");
-        		throw new ParamsErrorException();
+        		String logmsg = ">>> DataNode and RuleName is NULL.";
+        		log.error(logmsg);
+        		throw new ParamsErrorException(logmsg);
         	}
             if(isRoute) {//路由计算
             	/**
@@ -163,6 +165,11 @@ public class RouteInterceptor {
      */
     private void execute(ProceedingJoinPoint jp, Router router, String ruleName, boolean isReadCacheValue) throws Throwable {
     	TableRule tableRule = XMLLoader.getTableRuleByRuleName(ruleName);
+    	if(null == tableRule){
+    		String logmsg = ">>> FATAL ERROR! RuleName is not exist, please check your Router annotation configuration.";
+    		log.error(logmsg);
+    		throw new ParamsErrorException(logmsg);
+    	}
     	String routeField = tableRule.getRouteColumn();
     	log.debug(">>> ruleName="+ruleName+", routeField="+routeField);
         Object[] args = jp.getArgs();
@@ -254,13 +261,10 @@ public class RouteInterceptor {
         if(null != transactionalAnno && !transactionalAnno.readOnly()){
         	return false;
         }
-        if (transactionalAnno == null || readOnly) {
-            return true;
+        if(!readOnly){
+        	return false;
         }
-        if (transactionalAnno.readOnly()) {
-            return true;
-        }
-        return false;
+        return true;
     }
     
     /**
@@ -277,9 +281,19 @@ public class RouteInterceptor {
             ClassPool classPool = ClassPool.getDefault();
             classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
 //            classPool.importPackage("io.isharing.springddal");
-            CtClass clazz = classPool.get(method.getDeclaringClass().getName());
+            
+            CtClass clazz = null;
+            try{
+            	clazz = classPool.get(method.getDeclaringClass().getName());
+            }catch(NotFoundException ne){
+                Class<?> interfaceDao = getProxyDaoInterfaceClazz(jp);
+                clazz = classPool.get(interfaceDao.getName());
+                log.error(">>> proxy dao interface class. clazz name: "+interfaceDao.getName()+", method name: "+method.getName());
+                method = interfaceDao.getMethod(method.getName(), method.getParameterTypes());
+            }
+            
             ClassFile classFile = clazz.getClassFile();
-            log.debug(">>> 合并前Router:" + clazz.getAnnotation(Router.class));
+            log.debug(">>> Before merge value, Router:" + clazz.getAnnotation(Router.class));
             
             ConstPool constPool = classFile.getConstPool();
             Annotation tableAnnotation = new Annotation(Router.class.getName(), constPool);
@@ -292,19 +306,21 @@ public class RouteInterceptor {
     			updateRouter(null, router, tableAnnotation, constPool);
     		}
     		boolean flag = method.isAnnotationPresent(Router.class);
-			log.error(">>> isAnnotationPresent flag is " + flag);
+			log.error(">>> Method isAnnotationPresent flag is " + flag);
 			if(flag) {
 				Router _router = method.getAnnotation(Router.class);
 				updateRouter(router, _router, tableAnnotation, constPool);
 			}
-            
+			
             // 获取运行时注解属性
             AnnotationsAttribute attribute = (AnnotationsAttribute)classFile.getAttribute(AnnotationsAttribute.visibleTag);
-            attribute.addAnnotation(tableAnnotation);
-            classFile.addAttribute(attribute);
-            classFile.setVersionToJava5();
-              
-            log.debug(">>> 合并后Router:" + clazz.getAnnotation(Router.class));
+            if(null != attribute){
+            	attribute.addAnnotation(tableAnnotation);
+                classFile.addAttribute(attribute);
+                classFile.setVersionToJava5();
+			}
+            
+            log.debug(">>> After merge value, Router:" + clazz.getAnnotation(Router.class));
             
             annotation = (Router)clazz.getAnnotation(Router.class);
         } catch (Exception e) {
@@ -312,6 +328,13 @@ public class RouteInterceptor {
         }
 		log.error(">>> annotation is "+annotation);
 		return annotation;
+	}
+	
+	private Class<?> getProxyDaoInterfaceClazz(ProceedingJoinPoint jp) throws NoSuchMethodException{
+		Class<?> cl = getClass(jp);
+        Class<?>[] in = cl.getInterfaces();
+        Class<?> interfaceDao = in[0];
+        return interfaceDao;
 	}
 	
 	private void updateRouter(Router oldRouter, Router newRouter, Annotation tableAnnotation, ConstPool constPool){
@@ -395,7 +418,13 @@ public class RouteInterceptor {
         ClassClassPath classPath = new ClassClassPath(cls);
         pool.insertClassPath(classPath);
         CtClass cc = pool.get(clazzName);
-        CtMethod cm = cc.getDeclaredMethod(methodName);
+        CtMethod cm;
+		try {
+			cm = cc.getDeclaredMethod(methodName);
+		} catch (NotFoundException e) {
+			cc = cc.getSuperclass();
+	        cm = cc.getDeclaredMethod(methodName);
+		}
         MethodInfo methodInfo = cm.getMethodInfo();
         CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
         LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);

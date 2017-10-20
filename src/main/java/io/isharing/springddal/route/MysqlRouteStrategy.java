@@ -125,7 +125,7 @@ public class MysqlRouteStrategy implements RouteStrategy {
     		dbIndex = algorithm.calculate(routeFieldValue);
     	    tableIndex = getFormateTableIndex(dbGlobalCfg.getTableIndexStyle(), tbIndex);
         }
-		log.error(">>> isRead="+isRead+", forceReadOnMaster="+forceReadOnMaster);
+		log.error(">>> routeField="+routeField+", routeFieldValue="+routeFieldValue+", dbIndex="+dbIndex+", tableIndex="+tableIndex);
 		
 		List<String> dnList = getDataNodeList(dataNode);
 		String node;
@@ -230,7 +230,7 @@ public class MysqlRouteStrategy implements RouteStrategy {
 		DynamicDataSourceHolder.markWrite();
 		List<String> nodesNameList = nodes.getWriteNodesNameList();
 		String dbKey = nodesNameList.get(0);//TODO 默认只有一个写节点，未来是否考虑多个写节点？
-		log.error(">>> route to master db, dataNode=dn-"+dbIndex+", dbKey="+dbKey+", tableIndex="+tableIndex);
+		log.error(">>> route to master db, dataNode=dn-"+dbIndex+", dbKey="+dbKey);
 		setDynamicDataSourceHolder(dbKey, tableIndex);
 	}
 	
