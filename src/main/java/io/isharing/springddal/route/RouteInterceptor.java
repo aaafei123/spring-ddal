@@ -97,11 +97,11 @@ public class RouteInterceptor {
          */
         Router router = getDeclaringClassAnnotation(jp);
         if(null == router){
-        	log.debug(">>> No Router annotation, use default node for query.");
-        	routeStrategy.routeToGlobalNode(false, true);
+        		log.debug(">>> No Router annotation, use default node for query.");
+        		routeStrategy.routeToGlobalNode(false, true);
         }else{
-        	boolean isRoute = router.isRoute();
-        	String type = router.type();
+        		boolean isRoute = router.isRoute();
+        		String type = router.type();
             String dataNode = router.dataNode();
             String ruleName = router.ruleName();
             boolean readOnly = router.readOnly();
@@ -147,7 +147,7 @@ public class RouteInterceptor {
         }
 
         try {
-        	result = jp.proceed();
+        		result = jp.proceed();
         } finally {
             DynamicDataSourceHolder.reset();
         }
@@ -164,14 +164,14 @@ public class RouteInterceptor {
      * @throws Throwable
      */
     private void execute(ProceedingJoinPoint jp, Router router, String ruleName, boolean isReadCacheValue) throws Throwable {
-    	TableRule tableRule = XMLLoader.getTableRuleByRuleName(ruleName);
-    	if(null == tableRule){
-    		String logmsg = ">>> FATAL ERROR! RuleName is not exist, please check your Router annotation configuration.";
-    		log.error(logmsg);
-    		throw new ParamsErrorException(logmsg);
-    	}
-    	String routeField = tableRule.getRouteColumn();
-    	log.debug(">>> ruleName="+ruleName+", routeField="+routeField);
+	    	TableRule tableRule = XMLLoader.getTableRuleByRuleName(ruleName);
+	    	if(null == tableRule){
+	    		String logmsg = ">>> FATAL ERROR! RuleName is not exist, please check your Router annotation configuration.";
+	    		log.error(logmsg);
+	    		throw new ParamsErrorException(logmsg);
+	    	}
+	    	String routeField = tableRule.getRouteColumn();
+	    	log.debug(">>> ruleName="+ruleName+", routeField="+routeField);
         Object[] args = jp.getArgs();
         Map<String, Object> nameAndArgs = getFieldsNameAndArgs(jp, args);
         log.debug(">>> "+nameAndArgs.toString());
@@ -188,8 +188,8 @@ public class RouteInterceptor {
     }
     
     private String processRouteFieldValue(Object[] args, Map<String, Object> nameAndArgs, String routeField) throws Throwable {
-    	String routeFieldValue = "";
-    	if (args != null && args.length > 0) {
+    		String routeFieldValue = "";
+    		if (args != null && args.length > 0) {
             for (int i = 0; i < args.length; i++) {
                 long t2 = System.currentTimeMillis();
                 
@@ -235,8 +235,8 @@ public class RouteInterceptor {
                 }
                 log.debug(">>> routeFieldValue="+routeFieldValue + ", cost time=" + (System.currentTimeMillis() - t2));
             }
-    	}
-    	return routeFieldValue;
+    		}
+    		return routeFieldValue;
     }
     
     /**
@@ -259,10 +259,10 @@ public class RouteInterceptor {
         //如果有事务注解，并且事务注解表明readOnly为false，那么判断为写操作。
         //如果Router注解中也配置了readOnly=true，则以事务注解为准。
         if(null != transactionalAnno && !transactionalAnno.readOnly()){
-        	return false;
+        		return false;
         }
         if(!readOnly){
-        	return false;
+        		return false;
         }
         return true;
     }
@@ -278,6 +278,7 @@ public class RouteInterceptor {
 		Router annotation = null;
 		try {
 			Method method = getMethod(jp);
+			/*
             ClassPool classPool = ClassPool.getDefault();
             classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
 //            classPool.importPackage("io.isharing.springddal");
@@ -290,7 +291,10 @@ public class RouteInterceptor {
                 clazz = classPool.get(interfaceDao.getName());
                 log.error(">>> proxy dao interface class. clazz name: "+interfaceDao.getName()+", method name: "+method.getName());
                 method = interfaceDao.getMethod(method.getName(), method.getParameterTypes());
-            }
+            }*/
+			CtClass clazz = getCtClass(jp);
+			Class<?> interfaceDao = getProxyDaoInterfaceClazz(jp);
+			method = interfaceDao.getMethod(method.getName(), method.getParameterTypes());
             
             ClassFile classFile = clazz.getClassFile();
             log.debug(">>> Before merge value, Router:" + clazz.getAnnotation(Router.class));
@@ -315,7 +319,7 @@ public class RouteInterceptor {
             // 获取运行时注解属性
             AnnotationsAttribute attribute = (AnnotationsAttribute)classFile.getAttribute(AnnotationsAttribute.visibleTag);
             if(null == attribute){
-            	attribute = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
+            		attribute = new AnnotationsAttribute(constPool, AnnotationsAttribute.visibleTag);
 			}
             attribute.addAnnotation(tableAnnotation);
 			classFile.addAttribute(attribute);
@@ -325,7 +329,7 @@ public class RouteInterceptor {
             
             annotation = (Router)clazz.getAnnotation(Router.class);
         } catch (Exception e) {
-        	log.error(">>> occur exception, e:"+e.getLocalizedMessage());
+        		log.error(">>> occur exception, e:"+e.getLocalizedMessage());
             e.printStackTrace();
         }
 		log.error(">>> annotation is "+annotation);
@@ -348,7 +352,7 @@ public class RouteInterceptor {
 		boolean _readOnly = true;
 		if(null != oldRouter){
 			_isRoute = oldRouter.isRoute();
-        	_type = oldRouter.type();
+			_type = oldRouter.type();
             _dataNode = oldRouter.dataNode();
             _ruleName = oldRouter.ruleName();
             _readOnly = oldRouter.readOnly();
@@ -357,12 +361,11 @@ public class RouteInterceptor {
 		
 		if(newRouter != null){
 			boolean isRoute = newRouter.isRoute();
-        	String type = newRouter.type();
+        		String type = newRouter.type();
             String dataNode = newRouter.dataNode();
             String ruleName = newRouter.ruleName();
             boolean readOnly = newRouter.readOnly();
             boolean forceReadOnMaster = newRouter.forceReadOnMaster();
-            
             
             if(_isRoute != isRoute){
             	tableAnnotation.addMemberValue("isRoute", new BooleanMemberValue(isRoute, constPool));	
@@ -394,16 +397,33 @@ public class RouteInterceptor {
         return jp.getTarget().getClass();
     }
     
+    private CtClass getCtClass(ProceedingJoinPoint jp) throws NoSuchMethodException, NotFoundException {
+    		Method method = getMethod(jp);
+        ClassPool classPool = ClassPool.getDefault();
+        classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
+//        classPool.importPackage("io.isharing.springddal");
+        
+        CtClass clazz = null;
+        try{
+        	clazz = classPool.get(method.getDeclaringClass().getName());
+        }catch(NotFoundException ne){
+            Class<?> interfaceDao = getProxyDaoInterfaceClazz(jp);
+            clazz = classPool.get(interfaceDao.getName());
+            log.error(">>> proxy dao interface class. clazz name: "+interfaceDao.getName());
+        }
+        return clazz;
+    }
+    
     private Map<String,Object> getFieldsNameAndArgs(ProceedingJoinPoint jp, Object[] args) throws NotFoundException, ClassNotFoundException, NoSuchMethodException{
-    	String classType = jp.getTarget().getClass().getName();    
-        Class<?> clazz = Class.forName(classType);    
-        String clazzName = clazz.getName();
+//    		String classType = jp.getTarget().getClass().getName();    
+//        Class<?> clazz = Class.forName(classType);    
+//        String clazzName = clazz.getName();
         String methodName = jp.getSignature().getName();
 //        Map<String, Object> nameAndArgs = getFieldsNameAndArgs(this.getClass(), clazzName, methodName, args);
         
         Map<String,Object > nameAndArgs = new HashMap<String,Object>();
         
-        ClassPool classPool = ClassPool.getDefault();
+        /*ClassPool classPool = ClassPool.getDefault();
         classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
 //        classPool.importPackage("io.isharing.springddal");
         CtClass cc = null;
@@ -413,7 +433,8 @@ public class RouteInterceptor {
             Class<?> interfaceDao = getProxyDaoInterfaceClazz(jp);
             cc = classPool.get(interfaceDao.getName());
             log.error(">>> proxy dao interface class. clazz name: "+interfaceDao.getName());
-        }
+        }*/
+        CtClass cc = getCtClass(jp);
         
         CtMethod cm;
 		try {
