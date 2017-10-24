@@ -109,12 +109,12 @@ Step05：项目中开发注解配置
 ## Router注解说明及示例
 Router注解主要有如下几个属性：isRoute、forceReadOnMaster、readOnly和ruleName。
 其中（红色必须）：
-isRoute：			#是否拆分，默认为拆分
-forceReadOnMaster：	#强制将读操作在写库中读，以避免写的时候从读库读不到	数据（主从同步延迟导致的问题）
-readOnly：			#是否读操作，默认true
-ruleName：			#拆分规则名，对应rule.xml的tableRule的name属性。
-dataNode：			#定义数据节点名称，对应datanode.xml文件部分定义。
-type：				#拆分类型，普通规则拆分默认为空。全局库/表须定义为：global
+isRoute：              #是否拆分，默认为拆分
+forceReadOnMaster：    #强制将读操作在写库中读，以避免写的时候从读库读不到数据（主从同步延迟导致的问题）
+readOnly：             #是否读操作，默认true
+ruleName：             #拆分规则名，对应rule.xml的tableRule的name属性。
+dataNode：             #定义数据节点名称，对应datanode.xml文件部分定义。
+type：                 #拆分类型，普通规则拆分默认为空。全局库/表须定义为：global
       
 使用举例：
 示例一：
