@@ -148,7 +148,7 @@ Router注解主要有如下几个属性：isRoute、forceReadOnMaster、readOnly
 ```java
       @Repository
       @Router(isRoute=true, dataNode="dn1,dn2",ruleName="part-by-year")
-      public class StudentDaoImpl extends BaseDaoImpl<Waybill, java.lang.Long> implements WaybillDao {
+      public class StudentDaoImpl extends BaseDaoImpl<Student, java.lang.Long> implements WaybillDao {
       ……
       }
 ```
