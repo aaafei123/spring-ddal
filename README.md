@@ -107,15 +107,15 @@ Step05：项目中开发注解配置
 另外，如果定义有BaseDao的公用父类和方法，则需要在BaseDao的公用方法中定义@Transactional（org.springframework.transaction.annotation.Transactional）表明该方法为写操作，如果是写操作该注解不能定义readOnly为true。
 
 ## Router注解说明及示例
-Router注解主要有如下几个属性：isRoute、forceReadOnMaster、readOnly和ruleName。
-其中（红色必须）：
-isRoute：              #是否拆分，默认为拆分
-forceReadOnMaster：    #强制将读操作在写库中读，以避免写的时候从读库读不到数据（主从同步延迟导致的问题）
-readOnly：             #是否读操作，默认true
-ruleName：             #拆分规则名，对应rule.xml的tableRule的name属性。
-dataNode：             #定义数据节点名称，对应datanode.xml文件部分定义。
+Router注解主要有如下几个属性：isRoute、forceReadOnMaster、readOnly和ruleName。  
+其中（红色必须）：  
+isRoute：              #是否拆分，默认为拆分  
+forceReadOnMaster：    #强制将读操作在写库中读，以避免写的时候从读库读不到数据（主从同步延迟导致的问题）  
+readOnly：             #是否读操作，默认true  
+ruleName：             #拆分规则名，对应rule.xml的tableRule的name属性  
+dataNode：             #定义数据节点名称，对应datanode.xml文件部分定义  
 type：                 #拆分类型，普通规则拆分默认为空。全局库/表须定义为：global
-      
+  
 使用举例：
 示例一：
  ```java
@@ -155,8 +155,8 @@ type：                 #拆分类型，普通规则拆分默认为空。全局�
 说明：示例四为基于类的注解配置，但是如果方法上也有注解配置，那么方法中的配置将会覆盖类上的配置信息，不重叠部分不变。比如例三和例四种，最后isRoute的值会是false，并且getStudentByClassID的Router注解值会变成：isRoute=false, dataNode="dn1,dn2,dn3",ruleName="part-by-rang-long"。
 
 注意事项：
-a) 同一个表，Router注解建议都定义是类名上；
-b) 如果DAO层是MyBatis生成的，无实现方法，则须在类名上定义Router注解，方法上定义的无效；
-c) Router定义只针对物理表对应的DAO，如果是一个DAO有多个表操作，则无法支持。
+1. 同一个表，Router注解建议都定义是类名上；  
+2. 如果DAO层是MyBatis生成的，无实现方法，则须在类名上定义Router注解，方法上定义的无效；  
+3. Router定义只针对物理表对应的DAO，如果是一个DAO有多个表操作，则无法支持。
 
 
