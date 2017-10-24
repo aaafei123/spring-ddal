@@ -116,7 +116,7 @@ Router注解主要有如下几个属性：isRoute、forceReadOnMaster、readOnly
 * dataNode：             #定义数据节点名称，对应datanode.xml文件部分定义  
 * type：                 #拆分类型，普通规则拆分默认为空。全局库/表须定义为：global
   
-使用举例：
+使用举例：  
 示例一：
  ```java
       @Router(dataNode="dn1,dn2",ruleName="part-by-rang-long",forceReadOnMaster=true)
