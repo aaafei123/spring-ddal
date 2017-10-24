@@ -153,9 +153,9 @@ public class MysqlRouteStrategy implements RouteStrategy {
 		DataSourceNode nodes = getDataSourceNodeByName(dataNode);
 		log.error(">>> dataNode="+dataNode+", tableIndex="+tableIndex+", isRead="+isRead+", forceReadOnMaster="+forceReadOnMaster);
 		if(null == nodes){
-			//TODO 需重新考虑找不到分片节点之后，是否路由至默认节点？
-			log.error(">>> "+dataNode+" is not define, using defualt node instead. dbkey=default, isRead="+isRead+", forceReadOnMaster="+forceReadOnMaster);
-			routeToDefaultNode(isRead, forceReadOnMaster);
+			//找不到分片节点，路由至全局节点
+			log.error(">>> "+dataNode+" is not define, using global node instead. isRead="+isRead+", forceReadOnMaster="+forceReadOnMaster);
+			routeToGlobalNode(isRead, forceReadOnMaster);
 			return;
 		}
 		processRoute(nodes, dataNode, tableIndex, isRead, forceReadOnMaster);
@@ -195,24 +195,6 @@ public class MysqlRouteStrategy implements RouteStrategy {
 		}
 	}
 	
-	/**
-	 * 这个default node是指的datanodes.xml文件中dataNodes节点配置default=true的节点，
-	 * 而不是rule.xml中配置的defaultNode
-	 * 
-	 * @param isRead			是否是读操作
-	 * @param forceReadOnMaster	强制从Master主库中执行读操作
-	 * 
-	 */
-	public void routeToDefaultNode(boolean isRead, boolean forceReadOnMaster){
-//		String dbKey = XMLLoader.getDefaultWriteDataNodeName();
-		DataSourceNode nodes = getDataSourceNodeByName("default");
-		if(null == nodes){
-			log.error(">>> ERROR! Please check your dataNode configuration on datanode.xml file.");
-			throw new ConfigurationException();
-		}
-		processRoute(nodes, "default", null, isRead, forceReadOnMaster);
-	}
-	
 	private void processRoute(DataSourceNode nodes, String dataNode, String tableIndex, boolean isRead, boolean forceReadOnMaster){
 		if(!isRead || forceReadOnMaster){
 			routeToMasterDB(nodes, dataNode, tableIndex);
@@ -230,7 +212,7 @@ public class MysqlRouteStrategy implements RouteStrategy {
 		DynamicDataSourceHolder.markWrite();
 		List<String> nodesNameList = nodes.getWriteNodesNameList();
 		String dbKey = nodesNameList.get(0);//TODO 默认只有一个写节点，未来是否考虑多个写节点？
-		log.error(">>> route to master db, dataNode=dn-"+dbIndex+", dbKey="+dbKey);
+		log.error(">>> route to master db, dataNode="+dbIndex+", dbKey="+dbKey);
 		setDynamicDataSourceHolder(dbKey, tableIndex);
 	}
 	
@@ -245,7 +227,7 @@ public class MysqlRouteStrategy implements RouteStrategy {
 		List<String> nodesNameList = nodes.getReadNodesNameList();
 		int index = (int) (Math.random() * nodesNameList.size());
 		String dbKey = nodesNameList.get(index);
-		log.error(">>> route to slaves db, dataNode=dn-"+dbIndex+", dbKey="+dbKey+", tableIndex="+tableIndex);
+		log.error(">>> route to slaves db, dataNode="+dbIndex+", dbKey="+dbKey+", tableIndex="+tableIndex);
 		setDynamicDataSourceHolder(dbKey, tableIndex);
 	}
 	
