@@ -268,9 +268,19 @@ public class RouteInterceptor {
 		Router annotation = null;
 		try {
 			Method method = getMethod(jp);
-			CtClass clazz = getCtClass(jp);
-			Class<?> interfaceDao = getProxyDaoInterfaceClazz(jp);
-			method = interfaceDao.getMethod(method.getName(), method.getParameterTypes());
+            ClassPool classPool = ClassPool.getDefault();
+            classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
+//            classPool.importPackage("io.isharing.springddal");
+            
+            CtClass clazz = null;
+            try{
+            	clazz = classPool.get(method.getDeclaringClass().getName());
+            }catch(NotFoundException ne){
+                Class<?> interfaceDao = getProxyDaoInterfaceClazz(jp);
+                clazz = classPool.get(interfaceDao.getName());
+                log.error(">>> proxy dao interface class. clazz name: "+interfaceDao.getName()+", method name: "+method.getName());
+                method = interfaceDao.getMethod(method.getName(), method.getParameterTypes());
+            }
 
 			ClassFile classFile = clazz.getClassFile();
 			log.debug(">>> Before merge value, Router:" + clazz.getAnnotation(Router.class));
@@ -404,28 +414,46 @@ public class RouteInterceptor {
 	 */
 	private Map<String, Object> getFieldsNameAndArgs(ProceedingJoinPoint jp, Object[] args)
 			throws NotFoundException, ClassNotFoundException, NoSuchMethodException {
-		String methodName = jp.getSignature().getName();
-		Map<String, Object> nameAndArgs = new HashMap<String, Object>();
-		CtClass cc = getCtClass(jp);
-		CtMethod cm;
+    	String classType = jp.getTarget().getClass().getName();    
+        Class<?> clazz = Class.forName(classType);    
+        String clazzName = clazz.getName();
+        String methodName = jp.getSignature().getName();
+//        Map<String, Object> nameAndArgs = getFieldsNameAndArgs(this.getClass(), clazzName, methodName, args);
+        
+        Map<String,Object > nameAndArgs = new HashMap<String,Object>();
+        
+        ClassPool classPool = ClassPool.getDefault();
+        classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
+//        classPool.importPackage("io.isharing.springddal");
+        CtClass cc = null;
+        try{
+        	cc = classPool.get(clazzName);
+        }catch(NotFoundException ne){
+            Class<?> interfaceDao = getProxyDaoInterfaceClazz(jp);
+            cc = classPool.get(interfaceDao.getName());
+            log.error(">>> proxy dao interface class. clazz name: "+interfaceDao.getName());
+        }
+        
+        CtMethod cm;
 		try {
 			cm = cc.getDeclaredMethod(methodName);
 		} catch (NotFoundException e) {
 			cc = cc.getSuperclass();
-			cm = cc.getDeclaredMethod(methodName);
+	        cm = cc.getDeclaredMethod(methodName);
 		}
-		MethodInfo methodInfo = cm.getMethodInfo();
-		CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
-		LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);
-		if (attr == null) {
-			throw new NotFoundException(">>> LocalVariableAttribute is NULL!");
-		}
-		int pos = Modifier.isStatic(cm.getModifiers()) ? 0 : 1;
-		for (int i = 0; i < cm.getParameterTypes().length; i++) {
-			nameAndArgs.put(attr.variableName(i + pos), args[i]);// paramNames即参数名
-		}
-		return nameAndArgs;
-	}
+        MethodInfo methodInfo = cm.getMethodInfo();
+        CodeAttribute codeAttribute = methodInfo.getCodeAttribute();
+        LocalVariableAttribute attr = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);
+        if (attr == null) {
+            throw new NotFoundException(">>> LocalVariableAttribute is NULL!");
+        }
+       // String[] paramNames = new String[cm.getParameterTypes().length];
+        int pos = Modifier.isStatic(cm.getModifiers()) ? 0 : 1;
+        for (int i = 0; i < cm.getParameterTypes().length; i++){
+        	nameAndArgs.put( attr.variableName(i + pos), args[i]);//paramNames即参数名
+        }
+        return nameAndArgs;
+    }
 
 	public RouteStrategy getRouteStrategy() {
 		return routeStrategy;
