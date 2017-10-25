@@ -1,6 +1,7 @@
-.classpath
 .project
-target/
+.classpath
+.settings/
 bin/
+target/
 logpath_IS_UNDEFINED/
-
+spring_ddal.iml
