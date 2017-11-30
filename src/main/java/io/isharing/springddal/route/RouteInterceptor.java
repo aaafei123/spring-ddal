@@ -180,12 +180,12 @@ public class RouteInterceptor {
 		if (args != null && args.length > 0) {
 			for (int i = 0; i < args.length; i++) {
 				long t2 = System.currentTimeMillis();
-
-				/**
-				 * MyBatis的传入参数parameterType类型分两种 1.
-				 * 基本数据类型：int,string,long,Date; 2. 复杂数据类型：类和Map
-				 */
-				if (ParameterMapping.isPrimitiveType(args[i].getClass())) {// 基本数据类型：int,string,long,Date
+				if(null != args[i]){
+					/**
+					 * MyBatis的传入参数parameterType类型分两种 1.
+					 * 基本数据类型：int,string,long,Date; 2. 复杂数据类型：类和Map
+					 */
+					if (ParameterMapping.isPrimitiveType(args[i].getClass())) {// 基本数据类型：int,string,long,Date
 					/*
 					 * !!CAUTION!! MyBatis中SQL语句传值是基本类型的情况，如果没有拆分字段则会无法匹配拆分字段的值。
 					 * 规避方法为都用对象传值（如Map或实体对象），以下为另外一种临时解决方法。
@@ -222,6 +222,7 @@ public class RouteInterceptor {
 				}
 				log.debug(
 						">>> routeFieldValue=" + routeFieldValue + ", cost time=" + (System.currentTimeMillis() - t2));
+				}
 			}
 		}
 		return routeFieldValue;
