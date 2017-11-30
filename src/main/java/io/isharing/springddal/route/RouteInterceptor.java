@@ -265,6 +265,9 @@ public class RouteInterceptor {
 	private Router getDeclaringClassAnnotation(ProceedingJoinPoint jp) throws NoSuchMethodException {
 		Router annotation = null;
 		try {
+			if(!getAnnotation(jp)){
+				return null;
+			}
 			Method method = getMethod(jp);
             ClassPool classPool = ClassPool.getDefault();
             classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
@@ -319,6 +322,24 @@ public class RouteInterceptor {
 		}
 		log.error(">>> annotation is " + annotation);
 		return annotation;
+	}
+
+	private boolean getAnnotation(ProceedingJoinPoint jp) throws NoSuchMethodException {
+		Method method = getMethod(jp);
+		boolean flag = method.isAnnotationPresent(Router.class);
+		if(!flag){
+			Class<?> cl = getClass(jp);
+			Router annotation =  cl.getAnnotation(Router.class);
+			if(annotation == null){
+				Class<?>[] in = cl.getInterfaces();
+				Class<?> interfaceDao = in[0];
+				annotation = interfaceDao.getAnnotation(Router.class);
+				if(annotation == null){
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private Class<?> getProxyDaoInterfaceClazz(ProceedingJoinPoint jp) throws NoSuchMethodException {
