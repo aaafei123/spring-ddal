@@ -251,10 +251,7 @@ public class RouteInterceptor {
 		if (null != transactionalAnno && !transactionalAnno.readOnly()) {
 			return false;
 		}
-		if (!readOnly) {
-			return false;
-		}
-		return true;
+		return readOnly;
 	}
 
 	/**
