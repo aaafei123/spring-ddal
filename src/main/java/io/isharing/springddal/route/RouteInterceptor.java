@@ -265,7 +265,7 @@ public class RouteInterceptor {
 	private Router getDeclaringClassAnnotation(ProceedingJoinPoint jp) throws NoSuchMethodException {
 		Router annotation = null;
 		try {
-			if(!getAnnotation(jp)){
+			if(!hasTargetAnnotation(jp)){
 				return null;
 			}
 			Method method = getMethod(jp);
@@ -324,7 +324,14 @@ public class RouteInterceptor {
 		return annotation;
 	}
 
-	private boolean getAnnotation(ProceedingJoinPoint jp) throws NoSuchMethodException {
+    /**
+     * Has target annotation boolean.
+     * 判断切入点的方法,类或接口是否被 @Router 注解标识
+     * @param jp the jp
+     * @return the boolean
+     * @throws NoSuchMethodException the no such method exception
+     */
+    private boolean hasTargetAnnotation(ProceedingJoinPoint jp) throws NoSuchMethodException {
 		Method method = getMethod(jp);
 		boolean flag = method.isAnnotationPresent(Router.class);
 		if(!flag){
