@@ -4,7 +4,7 @@
 
 	<groupId>io.isharing.springddal</groupId>
 	<artifactId>spring_ddal</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>fkh_ddal</name>
