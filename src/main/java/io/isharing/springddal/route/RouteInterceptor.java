@@ -180,12 +180,12 @@ public class RouteInterceptor {
 		if (args != null && args.length > 0) {
 			for (int i = 0; i < args.length; i++) {
 				long t2 = System.currentTimeMillis();
-
-				/**
-				 * MyBatis的传入参数parameterType类型分两种 1.
-				 * 基本数据类型：int,string,long,Date; 2. 复杂数据类型：类和Map
-				 */
-				if (ParameterMapping.isPrimitiveType(args[i].getClass())) {// 基本数据类型：int,string,long,Date
+				if(null != args[i]){
+					/**
+					 * MyBatis的传入参数parameterType类型分两种 1.
+					 * 基本数据类型：int,string,long,Date; 2. 复杂数据类型：类和Map
+					 */
+					if (ParameterMapping.isPrimitiveType(args[i].getClass())) {// 基本数据类型：int,string,long,Date
 					/*
 					 * !!CAUTION!! MyBatis中SQL语句传值是基本类型的情况，如果没有拆分字段则会无法匹配拆分字段的值。
 					 * 规避方法为都用对象传值（如Map或实体对象），以下为另外一种临时解决方法。
@@ -222,6 +222,7 @@ public class RouteInterceptor {
 				}
 				log.debug(
 						">>> routeFieldValue=" + routeFieldValue + ", cost time=" + (System.currentTimeMillis() - t2));
+				}
 			}
 		}
 		return routeFieldValue;
@@ -250,10 +251,7 @@ public class RouteInterceptor {
 		if (null != transactionalAnno && !transactionalAnno.readOnly()) {
 			return false;
 		}
-		if (!readOnly) {
-			return false;
-		}
-		return true;
+		return readOnly;
 	}
 
 	/**
@@ -267,6 +265,9 @@ public class RouteInterceptor {
 	private Router getDeclaringClassAnnotation(ProceedingJoinPoint jp) throws NoSuchMethodException {
 		Router annotation = null;
 		try {
+			if(!hasTargetAnnotation(jp)){
+				return null;
+			}
 			Method method = getMethod(jp);
             ClassPool classPool = ClassPool.getDefault();
             classPool.appendClassPath(new ClassClassPath(RouteInterceptor.class));
@@ -321,6 +322,31 @@ public class RouteInterceptor {
 		}
 		log.error(">>> annotation is " + annotation);
 		return annotation;
+	}
+
+    /**
+     * Has target annotation boolean.
+     * 判断切入点的方法,类或接口是否被 @Router 注解标识
+     * @param jp the jp
+     * @return the boolean
+     * @throws NoSuchMethodException the no such method exception
+     */
+    private boolean hasTargetAnnotation(ProceedingJoinPoint jp) throws NoSuchMethodException {
+		Method method = getMethod(jp);
+		boolean flag = method.isAnnotationPresent(Router.class);
+		if(!flag){
+			Class<?> cl = getClass(jp);
+			Router annotation =  cl.getAnnotation(Router.class);
+			if(annotation == null){
+				Class<?>[] in = cl.getInterfaces();
+				Class<?> interfaceDao = in[0];
+				annotation = interfaceDao.getAnnotation(Router.class);
+				if(annotation == null){
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private Class<?> getProxyDaoInterfaceClazz(ProceedingJoinPoint jp) throws NoSuchMethodException {
