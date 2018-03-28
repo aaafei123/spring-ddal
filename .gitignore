@@ -5,3 +5,4 @@ bin/
 target/
 logpath_IS_UNDEFINED/
 spring_ddal.iml
+pom.xml

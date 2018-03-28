@@ -129,6 +129,9 @@ public class RouteInterceptor {
 
 		try {
 			result = jp.proceed();
+		} catch(Exception e){
+			e.printStackTrace();
+			log.error(">>> doRoute ocurr error!!! e: " + e.getLocalizedMessage());
 		} finally {
 			DynamicDataSourceHolder.reset();
 		}
@@ -243,15 +246,20 @@ public class RouteInterceptor {
 	private boolean isChoiceReadDB(Method method, boolean readOnly) {
 		Transactional transactionalAnno = AnnotationUtils.findAnnotation(method, Transactional.class);
 		// 如果之前选择了写库，则现在还选择写库
-		if (DynamicDataSourceHolder.isChoiceWrite()) {
-			return false;
-		}
+//		if (DynamicDataSourceHolder.isChoiceWrite()) {
+//			return false;
+//		}
 		// 如果有事务注解，并且事务注解表明readOnly为false，那么判断为写操作。
 		// 如果Router注解中也配置了readOnly=true，则以事务注解为准。
 		if (null != transactionalAnno && !transactionalAnno.readOnly()) {
 			return false;
 		}
-		return readOnly;
+		
+		if (!readOnly) {
+			return false;
+		}
+		
+		return true;
 	}
 
 	/**
@@ -275,7 +283,8 @@ public class RouteInterceptor {
             
             CtClass clazz = null;
             try{
-            	clazz = classPool.get(method.getDeclaringClass().getName());
+            	String methodName = method.getDeclaringClass().getName();
+            	clazz = classPool.get(methodName);
             }catch(NotFoundException ne){
                 Class<?> interfaceDao = getProxyDaoInterfaceClazz(jp);
                 clazz = classPool.get(interfaceDao.getName());
@@ -322,6 +331,22 @@ public class RouteInterceptor {
 		}
 		log.error(">>> annotation is " + annotation);
 		return annotation;
+		
+		/*Router annotation = null;
+		Method method = getMethod(jp);
+		boolean flag = method.isAnnotationPresent(Router.class);
+		log.error(">>> isAnnotationPresent flag is " + flag);
+		if (flag) {
+			annotation = method.getAnnotation(Router.class);
+		} else {
+			// 如果方法上没有注解，则搜索类上是否有注解
+			annotation = AnnotationUtils.findAnnotation(method.getDeclaringClass(), Router.class);
+			if (annotation == null) {
+				annotation = AnnotationUtils.findAnnotation(jp.getTarget().getClass(), Router.class);
+			}
+		}
+		log.error(">>> annotation is "+annotation);
+		return annotation;*/
 	}
 
     /**
