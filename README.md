@@ -2,11 +2,11 @@
 
 Spring DDAL是基于spring AOP和AbstractRoutingDataSource实现了读写分离和分库分表功能，是一款轻量级的插件，简单易用、轻耦合，使用注解即可完成读写分离、分库分表。
 
-Spring-DDAL的拆分方式与其他中间件不一样，是基于方法注解的方式实现，是一种轻量级的读写分离、分库分表实现。而其他中间件如Amoeba、Cobar、TDDL、Sharding-JDBC以及MyCat等等功能更完备、也更强大。
+Spring-DDAL的拆分方式与其他中间件不一样，是基于方法注解的方式实现，是一种轻量级的读写分离、分库分表实现。而其他中间件如Amoeba（已停止维护）、Cobar（已停止维护）、TDDL、Sharding-JDBC（推荐，开源）、dble（推荐，开源）、one-proxy（推荐，收费）以及MyCat（不推荐）等等功能更完备、也更强大。
 
 建议：由于是基于应用层做的分库分表，因此，虽然能进行拆分，但是在SQL路由方面还比较弱，尤其涉及分片路由、结果合并排序等方面，仍然存在不少问题。<b>因此，建议仅使用该插件的读写分离或分库或大表的分表功能，不建议同时使用分库分表功能</b>！！！
 
-如果有条件，建议可以直接上Sharding-JDBC或MyCat等中间件。中小型项目前期可以使用Spring DDAL过渡，后期支持Amoeba、Cobar、MyCat的平缓切换。
+如果有条件，建议可以直接上Sharding-JDBC或dble等中间件。中小型项目前期可以使用Spring DDAL过渡，后期支持Amoeba、Cobar、MyCat的平缓切换。
 
 样例使用工程，请参见链接：
 
